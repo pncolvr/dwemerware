@@ -32,8 +32,12 @@ on:
 
 jobs:
   deploy:
-    uses: pncolvr/dwemerware/workflows/deploy/azure-function.yml
+    uses: pncolvr/dwemerware/.github/workflows/azure-function.yml@master
     with:
+      # this is to solve the case when code is pushed and environment is not set,
+      # we assume that if branch name is staging we should deploy to pp environment
+      # and every other branch name we should deploy to dev environment
+      # when we use workflow dispatch, the environment input is set, we deploy to that environment
       environment: ${{ github.event_name == 'push' && (github.ref_name == 'staging' && 'pp' || 'dev') || github.event.inputs.environment }}
       function_app_name: <function app name>
       project_path: <function app path inside your repo>
