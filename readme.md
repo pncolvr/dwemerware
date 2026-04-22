@@ -1,12 +1,12 @@
 # About
 
-Repo to store useful resusable workflows for github actions.
+Repo to store useful reusable workflows for github actions.
 
 
 # Azure Function Sample
 
-To use this repo you must configure an enviroment on your repo.</br>
-On the environments that you create, dont forget about changing inputs and jobs sections, you must create an environment secret which content is the publish profile that you can get from Azure.
+To use this repo you must configure an environment on your repo.</br>
+On the environments that you create, don't forget about changing inputs and jobs sections, you must create an environment secret which content is the publish profile that you can get from Azure.
 
 ```yml
 name: Deploy Azure Function
