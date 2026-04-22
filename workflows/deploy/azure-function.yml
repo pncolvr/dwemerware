@@ -1,0 +1,88 @@
+name: Reusable Azure Functions Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Deployment environment name
+        required: true
+        type: string
+      function_app_name:
+        description: Azure Function App name
+        required: true
+        type: string
+      project_path:
+        description: Path to the Azure Functions project
+        required: true
+        type: string
+      dotnet_version:
+        description: .NET SDK version used to build
+        required: false
+        type: string
+        default: 8.0.x
+      package_output_path:
+        description: Output folder for published artifacts
+        required: false
+        type: string
+        default: output
+      github_nuget_source:
+        description: Optional GitHub Packages source URL
+        required: false
+        type: string
+        default: ""
+      github_nuget_source_name:
+        description: Name used when adding the GitHub package source
+        required: false
+        type: string
+        default: github
+    secrets:
+      publish_profile:
+        description: Azure Function publish profile
+        required: true
+      package_feed_token:
+        description: Token for private package feeds (defaults to github.token when omitted)
+        required: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ inputs.dotnet_version }}
+
+      - name: Configure GitHub Packages source
+        if: ${{ inputs.github_nuget_source != '' }}
+        shell: bash
+        run: |
+          dotnet nuget remove source "${{ inputs.github_nuget_source_name }}" || true
+          dotnet nuget add source "${{ inputs.github_nuget_source }}" \
+            --name "${{ inputs.github_nuget_source_name }}" \
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.package_feed_token || github.token }}" \
+            --store-password-in-clear-text
+
+      - name: Restore dependencies
+        run: dotnet restore "${{ inputs.project_path }}"
+
+      - name: Build
+        run: dotnet build "${{ inputs.project_path }}" --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish "${{ inputs.project_path }}" --configuration Release --output "${{ inputs.project_path }}/${{ inputs.package_output_path }}" --no-build
+
+      - name: Deploy to Azure Functions
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ inputs.function_app_name }}
+          package: "${{ inputs.project_path }}/${{ inputs.package_output_path }}"
+          publish-profile: ${{ secrets.publish_profile }}
