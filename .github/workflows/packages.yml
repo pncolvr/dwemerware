@@ -26,6 +26,12 @@ on:
         required: false
         type: string
         default: patch
+      initial-version:
+        description: >
+          Initial version to use when no tags exist yet.
+        required: false
+        type: string
+        default: '0.0.1'
       nuget-source-name:
         description: Friendly name for the NuGet source entry in the local config
         required: false
@@ -53,6 +59,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: ${{ inputs.default-bump }}
           TAG_PREFIX: ${{ inputs.tag-prefix }}
+          INITIAL_VERSION: ${{ inputs.initial-version }}
           DRY_RUN: true
           VERBOSE: true
           FORCE_WITHOUT_CHANGES: true
